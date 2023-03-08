@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using dotNet6_API_Auth.Auth;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegisteredClaimNames;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using MimeKit;
 
 namespace dotNet6_API_Auth.Controllers;
 
@@ -75,6 +77,7 @@ namespace dotNet6_API_Auth.Controllers;
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new Response { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+            SendEmail(model.Email, model.UserName, "user");
 
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
         }
@@ -160,5 +163,32 @@ namespace dotNet6_API_Auth.Controllers;
                 );
 
             return token;
+        }
+
+        private static void SendEmail(string emailAddress, string userName, string role)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Do Not Reply", "eben_burger@me.com"));
+            message.To.Add(new MailboxAddress(userName, emailAddress));
+            message.Subject = userName;
+
+            message.Body = new TextPart("plain")
+            {
+                Text = @$"
+<strong>Hey {userName},</strong>
+<p style='font-size=42px'>Welcome to the test site, you have been given {role} privilege. </p>
+"
+            };
+
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                client.Connect("smtp.mail.me.com", 587, false);
+
+                // Note: only needed if the SMTP server requires authentication
+                client.Authenticate("eben_burger@me.com", "zrmz-amxj-chwb-cdse");
+
+                client.Send(message);
+                client.Disconnect(true);
+            }
         }
     }
