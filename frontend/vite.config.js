@@ -9,6 +9,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
+    },
+    server: {
+      target: 'https://localhost:44348/', changeOrigin: true
     }
   }
 })
