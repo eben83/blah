@@ -10,6 +10,17 @@ ConfigurationManager configuration = builder.Configuration;
 
 // Add services to the container.
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy  =>
+        {
+            // policy.WithOrigins("http://127.0.0.1:5173/").AllowAnyHeader().AllowAnyMethod();
+            policy.WithOrigins("https://localhost").AllowAnyHeader().AllowAnyMethod();
+        });
+});
+
 // For Entity Framework
 builder.Services.AddDbContext<ContentDb>(options => options.UseSqlServer(configuration.GetConnectionString("ConnStr")));
 
@@ -56,6 +67,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors(MyAllowSpecificOrigins);
 
 // Authentication & Authorization
 app.UseAuthentication();
